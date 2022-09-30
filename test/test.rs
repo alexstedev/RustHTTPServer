@@ -1,34 +1,13 @@
-# Rust HTTP Server
-
-An HTTP server framework that emphasizes expressibility and minimalism. Inspired by Flask and Express.js
-
-Features:
-
-- Worker-style multithreading
-- Zero dependencies
-- \<500 lines of code. Easy to audit and extend
-- Middleware
-- Static file folder
-- Easy to use
-- No unwraps
-
-# Getting started
-
-Here is some example code that shows rusthttpserver in action. It should be self explanatory if you are familiar with http libraries.
-
-```rust
-extern crate rusthttpserver;
+use rusthttpserver;
 use rusthttpserver::request::Request;
 use rusthttpserver::response::Response;
 
 fn main() {
     // Create a rusthttpserver app with 2 worker threads
     let mut app = rusthttpserver::RustHTTPServer::new(2);
-
     // Use a directory called public in the project root to serve static files
     app.public("public");
 
-    // Middleware for all requests starting with /post/
     app.middle(
         "/post/",
         |req: Request, mut res: Response| -> (Request, Response, bool) {
@@ -42,7 +21,7 @@ fn main() {
         },
     );
 
-    // Redirect GET / to GET /index.html which is a file in the public directory
+    // Redirect
     app.route("/", |req: Request, mut res: Response| -> Response {
         if req.method == "GET" {
             res.status(301);
@@ -53,14 +32,15 @@ fn main() {
 
     // GET with params
     app.route("/user/", |req: Request, mut res: Response| -> Response {
-        let param_keys = ["name", "age"];
+        let param_keys = vec!["name", "age"];
         if req.method == "GET" {
-            for key in param_keys.iter() {
-                if !req.params.contains_key(&key[..]) {
+            match req.contains_params(param_keys) {
+                Some(missing_key) => {
                     res.status(400);
-                    res.body(format!("Missing parameter: {}", key));
+                    res.body(format!("Missing parameter: {}", missing_key));
                     return res;
                 }
+                None => {}
             }
             res.status(200);
             res.body(format!(
@@ -79,8 +59,10 @@ fn main() {
     app.route("/post/", |req: Request, mut res: Response| -> Response {
         // RustHTTPServer does not have JSON serilization built inn,
         // if you want to parse JSON consider combining rusthttpserver with serde_json (https://crates.io/crates/serde_json)
-        println!("{}", req.body);
         if req.method == "POST" {
+            if req.headers["content-type"] == "application/json" {
+                println!("{}", String::from_utf8_lossy(&req.body));
+            }
             res.status(200);
             res.body("{\"message\": \"Hello World!\"}");
             // HTTP headers can be added like this
@@ -95,6 +77,3 @@ fn main() {
     let err = app.bind("127.0.0.1:3000");
     println!("{}", err);
 }
-
-
-```

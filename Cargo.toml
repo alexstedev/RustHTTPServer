@@ -1,0 +1,20 @@
+[package]
+name = "RustHTTPServer"
+description = "HTTP server framework that emphezies simplicity and minimalism. Inspired by Flask and Exress.js"
+version = "0.0.0"
+repository = "https://github.com/alexstedev/RustHTTPServer"
+keywords = ["http", "web", "server"]
+categories = ["network-programming", "web-programming::http-server"]
+authors = ["alexstedev"]
+edition = "2022"
+license = "MIT"
+readme="README.md"
+
+include = [
+  "Cargo.toml",
+  "src/**/*",
+  #"build.rs",
+]
+
+
+[dependencies]
